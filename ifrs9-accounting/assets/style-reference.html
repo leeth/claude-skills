@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IFRS 9 Kursregulering — Matched Funding (udlån + obligationer)</title>
+<style>
+:root {
+  --font-sans: system-ui, -apple-system, sans-serif;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666;
+  --color-text-tertiary: #999;
+  --color-background-secondary: #f5f5f3;
+  --color-border-tertiary: rgba(0,0,0,0.12);
+  --color-border-secondary: rgba(0,0,0,0.2);
+  --border-radius-lg: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #e0dfd8;
+    --color-text-secondary: #9c9a92;
+    --color-text-tertiary: #73726c;
+    --color-background-secondary: #2a2a28;
+    --color-border-tertiary: rgba(255,255,255,0.12);
+    --color-border-secondary: rgba(255,255,255,0.2);
+  }
+  body { background: #1a1a18; }
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { font-family: var(--font-sans); color: var(--color-text-primary); padding: 24px; max-width: 1300px; margin: 0 auto; }
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+.subtitle { font-size: 13px; color: var(--color-text-secondary); margin-bottom: 20px; }
+.day { margin-bottom: 24px; }
+.day-title { font-size: 16px; font-weight: 500; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid var(--color-border-tertiary); }
+.side-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin: 10px 0 6px; color: var(--color-text-secondary); }
+.accounts { display: flex; gap: 20px; flex-wrap: wrap; }
+.account { flex: 1; min-width: 200px; }
+.acct-title { font-size: 13px; font-weight: 500; text-align: center; margin-bottom: 4px; }
+.t-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.t-table thead th { font-weight: 400; font-size: 10px; color: var(--color-text-tertiary); padding: 2px 6px 4px; }
+.t-table thead th:first-child { text-align: left; }
+.t-table thead th:last-child { text-align: right; }
+.t-head-line { border-bottom: 1.5px solid var(--color-text-primary); }
+.t-table td { padding: 2px 6px; vertical-align: top; }
+.t-table td:first-child { border-right: 0.5px solid var(--color-border-secondary); }
+.t-table td:last-child { text-align: right; }
+.t-table .total-row td { border-top: 1px solid var(--color-text-primary); font-weight: 500; padding-top: 5px; }
+.note { font-size: 11px; color: var(--color-text-secondary); }
+.delta { color: #1D9E75; font-weight: 500; }
+.delta-neg { color: #A32D2D; font-weight: 500; }
+.sep { border: none; border-top: 1px dashed var(--color-border-tertiary); margin: 20px 0; }
+.scenario { padding: 12px 16px; border-radius: var(--border-radius-lg); background: var(--color-background-secondary); margin-bottom: 20px; font-size: 13px; line-height: 1.8; }
+.callout { padding: 10px 14px; border-radius: var(--border-radius-lg); margin-top: 8px; margin-bottom: 10px; font-size: 12px; line-height: 1.6; }
+.callout-coral { background: #FAECE7; color: #712B13; }
+.callout-green { background: #E7FAF0; color: #0E5431; }
+.callout-purple { background: #F0E7FA; color: #3C1364; }
+@media (prefers-color-scheme: dark) {
+  .callout-coral { background: #4A1B0C; color: #F0997B; }
+  .callout-green { background: #0C3A20; color: #7BF0B0; }
+  .callout-purple { background: #2A0C4A; color: #C07BF0; }
+}
+.saldi-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; padding: 8px 12px; border-radius: var(--border-radius-lg); background: var(--color-background-secondary); border: 0.5px solid var(--color-border-tertiary); font-size: 12px; }
+.saldo-item { display: flex; gap: 5px; align-items: baseline; }
+.saldo-label { color: var(--color-text-secondary); }
+.saldo-val { font-weight: 500; }
+.saldo-pos { color: #1D9E75; }
+.saldo-zero { color: var(--color-text-tertiary); }
+.saldo-sep { color: var(--color-border-secondary); }
+.summary-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+.summary-card { flex: 1; min-width: 140px; padding: 12px 14px; border-radius: var(--border-radius-lg); text-align: center; }
+.sc-teal { background: #E1F5EE; color: #085041; }
+.sc-purple { background: #EEEDFE; color: #3C3489; }
+.sc-amber { background: #FAEEDA; color: #633806; }
+@media (prefers-color-scheme: dark) {
+  .sc-teal { background: #04342C; color: #5DCAA5; }
+  .sc-purple { background: #26215C; color: #AFA9EC; }
+  .sc-amber { background: #412402; color: #FAC775; }
+}
+.summary-card .label { font-size: 12px; font-weight: 500; margin-bottom: 3px; }
+.summary-card .val { font-size: 18px; font-weight: 500; }
+.summary-card .sub { font-size: 11px; margin-top: 2px; }
+.loan-tag { display: inline-block; font-size: 10px; font-weight: 500; padding: 1px 5px; border-radius: 4px; margin-right: 3px; }
+.tag-a { background: #D6E4F0; color: #1F3864; }
+.tag-b { background: #E8D5F0; color: #3C1F64; }
+@media (prefers-color-scheme: dark) {
+  .tag-a { background: #1F3864; color: #A8C4E0; }
+  .tag-b { background: #3C1F64; color: #D0A8E0; }
+}
+.principle-box { padding: 10px 14px; border-radius: var(--border-radius-lg); background: var(--color-background-secondary); border-left: 3px solid #2E75B6; margin-bottom: 16px; font-size: 12px; line-height: 1.6; }
+.je-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 6px 0; }
+.je-table td { padding: 2px 6px; }
+.je-table .je-sum { border-top: 1.5px solid var(--color-text-primary); font-weight: 500; }
+.netting-box { display: flex; gap: 12px; margin: 8px 0; flex-wrap: wrap; }
+.netting-item { flex: 1; min-width: 180px; padding: 8px 12px; border-radius: 8px; font-size: 12px; }
+.ni-green { background: #E7FAF0; color: #0E5431; }
+.ni-red { background: #FDEAEA; color: #7A1D1D; }
+.ni-grey { background: var(--color-background-secondary); }
+@media (prefers-color-scheme: dark) {
+  .ni-green { background: #0C3A20; color: #7BF0B0; }
+  .ni-red { background: #3D0E0E; color: #F09B9B; }
+}
+</style>
+</head>
+<body>
+
+<h1>IFRS 9 Kursregulering — Matched Funding</h1>
+<p class="subtitle">Udlån (FVTPL aktiv) + obligationsudstedelse (FVTPL passiv). Samme serie. Afdrag nominelt = udtrækning. Prepayment kurs 100.</p>
+
+<div class="principle-box">
+<strong>Principper:</strong><br>
+1. Udlån bogføres til FV (mid). Kursskæring (FV − udbetalt) er realiseret day-one (B5.1.2A, Level 1).<br>
+2. Obligationer udstedes til mid-kurs → ingen kursskæring på passivsiden.<br>
+3. Samme serie: kursregulering på udlån og obligation er identisk og netter til 0 i P&L.<br>
+4. Afdrag (nom) og udtrækning (nom) er symmetriske → realiseret effekt netter til 0.<br>
+5. Indfrielse kurs 100 og prepayment kurs 100 er symmetriske → realiseret netter til 0.<br>
+6. <strong>Eneste permanente P&L = kursskæring</strong> (de basispunkter instituttet tager hjem ved udbetaling).<br>
+7. Balanceligningen: Kasse + Udlån FV − Obl FV = Urealiseret + Realiseret = Total P&L.
+</div>
+
+<div class="scenario">
+<strong>Scenarie:</strong><br>
+Dag 1: <span class="loan-tag tag-a">A</span> Udlån nom. 1M, udbetalt kurs 98,9, mid 99,4. Obl udstedt til mid 99,4<br>
+Dag 2: <span class="loan-tag tag-b">B</span> Udlån nom. 1M, udbetalt kurs 97,0, mid 97,25. Obl udstedt til mid 97,25. <strong>Mid falder 99,4 → 97,25</strong><br>
+Dag 30: Afdrag 25k nom. begge. Symmetrisk udtrækning. Mid 98,0<br>
+Dag 60: <span class="loan-tag tag-a">A</span> Indfrielse kurs 100. Obl prepayment kurs 100. Mid 101
+</div>
+
+<!-- ===================== DAG 1 ===================== -->
+<div class="day">
+<div class="day-title">Dag 1 — <span class="loan-tag tag-a">A</span> Udlån + obligation, mid 99,4</div>
+<div class="callout callout-green">
+<strong>Udlån:</strong> Dr Udlån 994.000 / Cr Kasse 989.000 / Cr Realiseret 5.000 (kursskæring B5.1.2A)<br>
+<strong>Obligation:</strong> Dr Kasse 994.000 / Cr Obl 994.000 (udstedt til mid, ingen kursskæring)
+</div>
+<div class="accounts">
+<div class="account">
+<div class="acct-title">Udlån (FVTPL aktiv)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Lån A til FV <span class="note">994.000</span></td><td></td></tr>
+<tr class="total-row"><td>Saldo: 994.000</td><td></td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Udstedte obl. (FVTPL passiv)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td></td><td>Obl A udstedt <span class="note">994.000</span></td></tr>
+<tr class="total-row"><td></td><td>Saldo: 994.000</td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Kasse</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Obl provenu <span class="note">994.000</span></td><td>Udbetaling A <span class="note">989.000</span></td></tr>
+<tr class="total-row"><td>Saldo: 5.000</td><td></td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Realiseret (P&L)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td></td><td><span class="delta">Kursskæring A +5.000</span></td></tr>
+<tr class="total-row"><td></td><td>Saldo: +5.000</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="saldi-bar">
+<div class="saldo-item"><span class="saldo-label">Udlån:</span> <span class="saldo-val">994.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Obl:</span> <span class="saldo-val">994.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Kasse:</span> <span class="saldo-val saldo-pos">5.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Ureal:</span> <span class="saldo-val saldo-zero">0</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Real:</span> <span class="saldo-val saldo-pos">+5.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">P&L:</span> <span class="saldo-val saldo-pos">+5.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Bal:</span> <span class="saldo-val saldo-zero">✓</span></div>
+</div>
+</div>
+
+<hr class="sep">
+
+<!-- ===================== DAG 2 ===================== -->
+<div class="day">
+<div class="day-title">Dag 2 — <span class="loan-tag tag-b">B</span> Udlån + obligation. Mid 99,4 → 97,25</div>
+<div class="callout callout-purple">
+<strong>Kursregulering A (mid falder 99,4 → 97,25):</strong><br>
+Udlån A: −21.500 (tab) | Obl A: +21.500 (gevinst) | <strong>Netto: 0</strong>
+</div>
+<div class="callout callout-green">
+<strong>Lån B:</strong> Kursskæring +2.500 (FV 972.500 − udbetalt 970.000). <strong>Obl B:</strong> Udstedt til mid 972.500
+</div>
+<div class="netting-box">
+<div class="netting-item ni-red">Udlån A kursreg: <strong>−21.500</strong><br><span class="note">Aktiv falder = tab</span></div>
+<div class="netting-item ni-green">Obl A kursreg: <strong>+21.500</strong><br><span class="note">Passiv falder = gevinst</span></div>
+<div class="netting-item ni-grey"><strong>Netto: 0</strong></div>
+</div>
+<div class="accounts">
+<div class="account">
+<div class="acct-title">Udlån (FVTPL aktiv)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Primo A <span class="note">994.000</span></td><td><span class="delta-neg">Kursreg. A −21.500</span></td></tr>
+<tr><td>Lån B til FV <span class="note">972.500</span></td><td></td></tr>
+<tr class="total-row"><td>Saldo: 1.945.000</td><td><span class="note">(2 × 972.500)</span></td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Udstedte obl. (FVTPL passiv)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td></td><td>Primo A <span class="note">994.000</span></td></tr>
+<tr><td><span class="delta">Kursreg. A −21.500</span></td><td></td></tr>
+<tr><td></td><td>Obl B udstedt <span class="note">972.500</span></td></tr>
+<tr class="total-row"><td></td><td>Saldo: 1.945.000</td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Kasse</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Primo <span class="note">5.000</span></td><td></td></tr>
+<tr><td>Obl B provenu <span class="note">972.500</span></td><td>Udbetaling B <span class="note">970.000</span></td></tr>
+<tr class="total-row"><td>Saldo: 7.500</td><td></td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Realiseret (P&L)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td></td><td>Primo <span class="note">+5.000</span></td></tr>
+<tr><td></td><td><span class="delta">Kursskæring B +2.500</span></td></tr>
+<tr class="total-row"><td></td><td>Saldo: +7.500</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="saldi-bar">
+<div class="saldo-item"><span class="saldo-label">Udlån:</span> <span class="saldo-val">1.945.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Obl:</span> <span class="saldo-val">1.945.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Kasse:</span> <span class="saldo-val saldo-pos">7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Ureal:</span> <span class="saldo-val saldo-zero">0</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Real:</span> <span class="saldo-val saldo-pos">+7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">P&L:</span> <span class="saldo-val saldo-pos">+7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Bal:</span> <span class="saldo-val saldo-zero">✓</span></div>
+</div>
+</div>
+
+<hr class="sep">
+
+<!-- ===================== DAG 30 ===================== -->
+<div class="day">
+<div class="day-title">Dag 30 — Afdrag 25k nom. + udtrækning, mid 97,25 → 98,0</div>
+<div class="callout callout-coral">
+<strong>Symmetrisk pr. lån — alt netter:</strong><br>
+Afdrag udlån: modt. 25k nom., fjern FV 24.312,50, real +687,50 |
+Udtrækning obl: betal 25k nom., fjern FV 24.312,50, real −687,50 | <strong>Netto: 0</strong><br>
+Kursreg. rest 975k × (98,0−97,25)% = +7.312,50 pr. lån, begge sider | <strong>Netto: 0</strong>
+</div>
+<div class="netting-box">
+<div class="netting-item ni-green">Afdrag udlån: <strong>+1.375</strong><br><span class="note">2 × 687,50</span></div>
+<div class="netting-item ni-red">Udtrækning obl: <strong>−1.375</strong><br><span class="note">2 × −687,50</span></div>
+<div class="netting-item ni-grey"><strong>Netto: 0</strong></div>
+</div>
+<div class="netting-box">
+<div class="netting-item ni-green">Kursreg. udlån: <strong>+14.625</strong></div>
+<div class="netting-item ni-red">Kursreg. obl: <strong>−14.625</strong></div>
+<div class="netting-item ni-grey"><strong>Netto: 0</strong></div>
+</div>
+<div class="accounts">
+<div class="account">
+<div class="acct-title">Udlån (FVTPL)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Primo <span class="note">1.945.000</span></td><td>Afdrag A+B FV <span class="note">48.625</span></td></tr>
+<tr><td><span class="delta">Kursreg. +14.625</span></td><td></td></tr>
+<tr class="total-row"><td>Saldo: 1.911.000</td><td><span class="note">(2 × 975k × 98%)</span></td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Udstedte obl. (FVTPL)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td></td><td>Primo <span class="note">1.945.000</span></td></tr>
+<tr><td>Udtræk. A+B FV <span class="note">48.625</span></td><td><span class="delta-neg">Kursreg. +14.625</span></td></tr>
+<tr class="total-row"><td></td><td>Saldo: 1.911.000</td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Kasse</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Primo <span class="note">7.500</span></td><td></td></tr>
+<tr><td>Afdrag ind <span class="note">50.000</span></td><td>Udtræk. ud <span class="note">50.000</span></td></tr>
+<tr class="total-row"><td>Saldo: 7.500</td><td></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="saldi-bar">
+<div class="saldo-item"><span class="saldo-label">Udlån:</span> <span class="saldo-val">1.911.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Obl:</span> <span class="saldo-val">1.911.000</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Kasse:</span> <span class="saldo-val saldo-pos">7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Ureal:</span> <span class="saldo-val saldo-zero">0</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Real:</span> <span class="saldo-val saldo-pos">+7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">P&L:</span> <span class="saldo-val saldo-pos">+7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Bal:</span> <span class="saldo-val saldo-zero">✓</span></div>
+</div>
+</div>
+
+<hr class="sep">
+
+<!-- ===================== DAG 60 ===================== -->
+<div class="day">
+<div class="day-title">Dag 60 — <span class="loan-tag tag-a">A</span> Indfrielse + prepayment kurs 100, mid 101</div>
+<div class="callout callout-coral">
+<strong>Alt netter:</strong><br>
+Kursreg. til 101: +29.250 × 2 begge sider → <strong>netto 0</strong><br>
+Indfrielse udlån A: real −9.750 | Prepayment obl A: real +9.750 → <strong>netto 0</strong><br>
+Reklassifikation udlån A: +15.062,50 | Reklassifikation obl A: −15.062,50 → <strong>netto 0</strong>
+</div>
+<div class="netting-box">
+<div class="netting-item ni-red">Indfri udlån A: <strong>−9.750</strong><br><span class="note">Modt. 975k &lt; FV 984.750</span></div>
+<div class="netting-item ni-green">Prepay obl A: <strong>+9.750</strong><br><span class="note">Betal 975k &lt; FV 984.750</span></div>
+<div class="netting-item ni-grey"><strong>Netto: 0</strong></div>
+</div>
+<div class="accounts">
+<div class="account">
+<div class="acct-title">Udlån (FVTPL)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Primo <span class="note">1.911.000</span></td><td></td></tr>
+<tr><td><span class="delta">Kursreg. A+B +58.500</span></td><td></td></tr>
+<tr><td></td><td>Indfrielse A <span class="note">984.750</span></td></tr>
+<tr class="total-row"><td>Saldo: 984.750</td><td><span class="note">(B: 975k × 101%)</span></td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Udstedte obl. (FVTPL)</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td></td><td>Primo <span class="note">1.911.000</span></td></tr>
+<tr><td></td><td><span class="delta-neg">Kursreg. A+B +58.500</span></td></tr>
+<tr><td>Prepayment A <span class="note">984.750</span></td><td></td></tr>
+<tr class="total-row"><td></td><td>Saldo: 984.750</td></tr>
+</tbody>
+</table>
+</div>
+<div class="account">
+<div class="acct-title">Kasse</div>
+<table class="t-table">
+<thead><tr class="t-head-line"><th>Debet</th><th>Kredit</th></tr></thead>
+<tbody>
+<tr><td>Primo <span class="note">7.500</span></td><td></td></tr>
+<tr><td>Indfrielse A <span class="note">975.000</span></td><td>Prepay A <span class="note">975.000</span></td></tr>
+<tr class="total-row"><td>Saldo: 7.500</td><td></td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="saldi-bar">
+<div class="saldo-item"><span class="saldo-label">Udlån:</span> <span class="saldo-val">984.750</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Obl:</span> <span class="saldo-val">984.750</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Kasse:</span> <span class="saldo-val saldo-pos">7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Ureal:</span> <span class="saldo-val saldo-zero">0</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Real:</span> <span class="saldo-val saldo-pos">+7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">P&L:</span> <span class="saldo-val saldo-pos">+7.500</span></div>
+<span class="saldo-sep">|</span>
+<div class="saldo-item"><span class="saldo-label">Bal:</span> <span class="saldo-val saldo-zero">✓</span></div>
+</div>
+</div>
+
+<hr class="sep">
+
+<!-- ===================== OPSUMMERING ===================== -->
+<div class="day-title">Opsummering</div>
+
+<div class="summary-grid">
+<div class="summary-card sc-teal">
+<div class="label">Kursskæring A</div>
+<div class="val">+5.000</div>
+<div class="sub">FV 994k − udbetalt 989k<br>5 bp × 1M nom.</div>
+</div>
+<div class="summary-card sc-teal">
+<div class="label">Kursskæring B</div>
+<div class="val">+2.500</div>
+<div class="sub">FV 972,5k − udbetalt 970k<br>2,5 bp × 1M nom.</div>
+</div>
+<div class="summary-card sc-amber">
+<div class="label">Total P&L</div>
+<div class="val">+7.500</div>
+<div class="sub">= Kasse = kursskæring<br>Konstant fra dag 1+2</div>
+</div>
+<div class="summary-card sc-purple">
+<div class="label">Urealiseret</div>
+<div class="val">0</div>
+<div class="sub">Altid 0<br>Matched funding</div>
+</div>
+</div>
+
+<hr class="sep">
+
+<div class="day-title">Netting-oversigt — hvorfor kun kursskæring overlever</div>
+
+<div class="principle-box">
+<table class="je-table">
+<tr><td colspan="4" style="padding-bottom:4px"><strong>Effekt</strong></td></tr>
+<tr style="color:var(--color-text-tertiary)"><td style="padding-left:14px"></td><td style="text-align:right; width:90px; font-size:10px">Udlån</td><td style="text-align:right; width:90px; font-size:10px">Obl</td><td style="text-align:right; width:70px; font-size:10px"><strong>Netto</strong></td></tr>
+<tr><td style="padding-left:14px" colspan="4"><em>Kursregulering (urealiseret)</em></td></tr>
+<tr><td style="padding-left:28px">Dag 2: 99,4→97,25</td><td style="text-align:right">−21.500</td><td style="text-align:right">+21.500</td><td style="text-align:right"><strong>0</strong></td></tr>
+<tr><td style="padding-left:28px">Dag 30: 97,25→98,0 (rest)</td><td style="text-align:right">+14.625</td><td style="text-align:right">−14.625</td><td style="text-align:right"><strong>0</strong></td></tr>
+<tr><td style="padding-left:28px">Dag 60: 98,0→101</td><td style="text-align:right">+58.500</td><td style="text-align:right">−58.500</td><td style="text-align:right"><strong>0</strong></td></tr>
+<tr><td style="padding-left:14px" colspan="4"><em>Afdrag / udtrækning (realiseret)</em></td></tr>
+<tr><td style="padding-left:28px">Dag 30: 2 × 25k nom.</td><td style="text-align:right">+1.375</td><td style="text-align:right">−1.375</td><td style="text-align:right"><strong>0</strong></td></tr>
+<tr><td style="padding-left:14px" colspan="4"><em>Indfrielse / prepayment (realiseret)</em></td></tr>
+<tr><td style="padding-left:28px">Dag 60: A kurs 100</td><td style="text-align:right">−9.750</td><td style="text-align:right">+9.750</td><td style="text-align:right"><strong>0</strong></td></tr>
+<tr><td style="padding-left:14px" colspan="4"><em>Reklassifikation (ureal → real)</em></td></tr>
+<tr><td style="padding-left:28px">Dag 60: A afviklet</td><td style="text-align:right">+15.062,50</td><td style="text-align:right">−15.062,50</td><td style="text-align:right"><strong>0</strong></td></tr>
+<tr style="border-top:1px solid var(--color-border-secondary)"><td style="padding-left:14px" colspan="4"><em>Kursskæring (kun udlånssiden)</em></td></tr>
+<tr><td style="padding-left:28px">Dag 1: A</td><td style="text-align:right">+5.000</td><td style="text-align:right">—</td><td style="text-align:right"><strong>+5.000</strong></td></tr>
+<tr><td style="padding-left:28px">Dag 2: B</td><td style="text-align:right">+2.500</td><td style="text-align:right">—</td><td style="text-align:right"><strong>+2.500</strong></td></tr>
+<tr class="je-sum"><td style="padding-top:5px"><strong>Total P&L</strong></td><td></td><td></td><td style="text-align:right; padding-top:5px"><strong>+7.500</strong></td></tr>
+</table>
+</div>
+
+<div class="principle-box" style="border-left-color: #1D9E75;">
+<strong>Konklusion:</strong> I et matched-funded realkreditinstitut er den eneste permanente P&L fra kursregulering <strong>kursskæringen</strong> — forskellen mellem mid-kurs og udbetalingskurs ved lånets oprettelse (B5.1.2A). Al markedskursregulering, afdrag/udtrækning, indfrielse/prepayment og reklassifikation netter perfekt til 0, fordi aktiv og passiv er i samme obligationsserie og afregnes symmetrisk.<br><br>
+Kassen er konstant 7.500 fra dag 2. Urealiseret er altid 0. PnL = Σ kursskæring = 5.000 + 2.500 = <strong>7.500</strong>.
+</div>
+
+</body>
+</html>
