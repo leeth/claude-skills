@@ -1,0 +1,254 @@
+/* IFRS 9 T-konti rendering styles — v2
+ *
+ * Used by scripts/generate_tkonti.py.
+ * Also available as a reference for direct HTML fallback rendering.
+ *
+ * Structure:
+ *   :root vars (light mode)
+ *   :root vars (dark mode, via prefers-color-scheme)
+ *   Base reset and typography
+ *   Layout: day, accounts, t-table
+ *   Components: callout, saldi-bar, summary-card, netting, principle-box, loan-tag
+ */
+
+:root {
+  --font-sans: system-ui, -apple-system, sans-serif;
+  --color-text-primary: #1a1a1a;
+  --color-text-secondary: #666;
+  --color-text-tertiary: #999;
+  --color-background-secondary: #f5f5f3;
+  --color-border-tertiary: rgba(0, 0, 0, 0.12);
+  --color-border-secondary: rgba(0, 0, 0, 0.2);
+  --border-radius-lg: 12px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-text-primary: #e0dfd8;
+    --color-text-secondary: #9c9a92;
+    --color-text-tertiary: #73726c;
+    --color-background-secondary: #2a2a28;
+    --color-border-tertiary: rgba(255, 255, 255, 0.12);
+    --color-border-secondary: rgba(255, 255, 255, 0.2);
+  }
+  body { background: #1a1a18; }
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--font-sans);
+  color: var(--color-text-primary);
+  padding: 24px;
+  max-width: 1300px;
+  margin: 0 auto;
+}
+
+h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+
+.subtitle {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin-bottom: 20px;
+}
+
+/* Day block */
+
+.day { margin-bottom: 24px; }
+
+.day-title {
+  font-size: 16px;
+  font-weight: 500;
+  margin-bottom: 12px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+}
+
+/* T-accounts */
+
+.accounts { display: flex; gap: 20px; flex-wrap: wrap; }
+
+.account { flex: 1; min-width: 200px; }
+
+.acct-title {
+  font-size: 13px;
+  font-weight: 500;
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.t-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+
+.t-table thead th {
+  font-weight: 400;
+  font-size: 10px;
+  color: var(--color-text-tertiary);
+  padding: 2px 6px 4px;
+}
+
+.t-table thead th:first-child { text-align: left; }
+.t-table thead th:last-child { text-align: right; }
+
+.t-head-line { border-bottom: 1.5px solid var(--color-text-primary); }
+
+.t-table td { padding: 2px 6px; vertical-align: top; }
+.t-table td:first-child { border-right: 0.5px solid var(--color-border-secondary); }
+.t-table td:last-child { text-align: right; }
+
+.t-table .total-row td {
+  border-top: 1px solid var(--color-text-primary);
+  font-weight: 500;
+  padding-top: 5px;
+}
+
+/* Inline styles */
+
+.note { font-size: 11px; color: var(--color-text-secondary); }
+.delta { color: #1D9E75; font-weight: 500; }
+.delta-neg { color: #A32D2D; font-weight: 500; }
+
+/* Separators and scenario box */
+
+.sep {
+  border: none;
+  border-top: 1px dashed var(--color-border-tertiary);
+  margin: 20px 0;
+}
+
+.scenario {
+  padding: 12px 16px;
+  border-radius: var(--border-radius-lg);
+  background: var(--color-background-secondary);
+  margin-bottom: 20px;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+/* Callouts (journal entries, formulas, notes) */
+
+.callout {
+  padding: 10px 14px;
+  border-radius: var(--border-radius-lg);
+  margin-top: 8px;
+  margin-bottom: 10px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.callout-coral  { background: #FAECE7; color: #712B13; }
+.callout-green  { background: #E7FAF0; color: #0E5431; }
+.callout-purple { background: #F0E7FA; color: #3C1364; }
+
+@media (prefers-color-scheme: dark) {
+  .callout-coral  { background: #4A1B0C; color: #F0997B; }
+  .callout-green  { background: #0C3A20; color: #7BF0B0; }
+  .callout-purple { background: #2A0C4A; color: #C07BF0; }
+}
+
+/* Saldi-bar */
+
+.saldi-bar {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 14px;
+  padding: 8px 12px;
+  border-radius: var(--border-radius-lg);
+  background: var(--color-background-secondary);
+  border: 0.5px solid var(--color-border-tertiary);
+  font-size: 12px;
+}
+
+.saldo-item { display: flex; gap: 5px; align-items: baseline; }
+.saldo-label { color: var(--color-text-secondary); }
+.saldo-val { font-weight: 500; }
+.saldo-pos { color: #1D9E75; }
+.saldo-zero { color: var(--color-text-tertiary); }
+.saldo-sep { color: var(--color-border-secondary); }
+
+/* Summary cards */
+
+.summary-grid { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 12px; }
+
+.summary-card {
+  flex: 1;
+  min-width: 140px;
+  padding: 12px 14px;
+  border-radius: var(--border-radius-lg);
+  text-align: center;
+}
+
+.sc-teal   { background: #E1F5EE; color: #085041; }
+.sc-purple { background: #EEEDFE; color: #3C3489; }
+.sc-amber  { background: #FAEEDA; color: #633806; }
+
+@media (prefers-color-scheme: dark) {
+  .sc-teal   { background: #04342C; color: #5DCAA5; }
+  .sc-purple { background: #26215C; color: #AFA9EC; }
+  .sc-amber  { background: #412402; color: #FAC775; }
+}
+
+.summary-card .label { font-size: 12px; font-weight: 500; margin-bottom: 3px; }
+.summary-card .val   { font-size: 18px; font-weight: 500; }
+.summary-card .sub   { font-size: 11px; margin-top: 2px; }
+
+/* Loan tags */
+
+.loan-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 500;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-right: 3px;
+}
+
+.tag-a { background: #D6E4F0; color: #1F3864; }
+.tag-b { background: #E8D5F0; color: #3C1F64; }
+
+@media (prefers-color-scheme: dark) {
+  .tag-a { background: #1F3864; color: #A8C4E0; }
+  .tag-b { background: #3C1F64; color: #D0A8E0; }
+}
+
+/* Principle box (for principles, netting-tables, conclusions) */
+
+.principle-box {
+  padding: 10px 14px;
+  border-radius: var(--border-radius-lg);
+  background: var(--color-background-secondary);
+  border-left: 3px solid #2E75B6;
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* Journal entry / netting table */
+
+.je-table { width: 100%; border-collapse: collapse; font-size: 12px; margin: 6px 0; }
+.je-table td { padding: 2px 6px; }
+.je-table .je-sum {
+  border-top: 1.5px solid var(--color-text-primary);
+  font-weight: 500;
+}
+
+/* Netting boxes (per-day symmetric effects) */
+
+.netting-box { display: flex; gap: 12px; margin: 8px 0; flex-wrap: wrap; }
+
+.netting-item {
+  flex: 1;
+  min-width: 180px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+}
+
+.ni-green { background: #E7FAF0; color: #0E5431; }
+.ni-red   { background: #FDEAEA; color: #7A1D1D; }
+.ni-grey  { background: var(--color-background-secondary); }
+
+@media (prefers-color-scheme: dark) {
+  .ni-green { background: #0C3A20; color: #7BF0B0; }
+  .ni-red   { background: #3D0E0E; color: #F09B9B; }
+}

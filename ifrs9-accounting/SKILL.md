@@ -26,6 +26,16 @@ Denne skill tager en beskrivelse af et finansielt flow og producerer:
 4. Formler hvor relevant
 5. En opsummering med konklusion
 
+## Anbefalet model
+
+Skillen kører på alle Claude-modeller. Valg efter scenarie-type:
+
+- **Haiku 4.5** — simple standardscenarier: enkelt FVTPL-udlån, basis kursskæring, standard kursregulering, hvor klassifikation er givet. Hurtig og billig, stadig korrekt.
+- **Sonnet 4.6** — default til rutine-realkreditbogføring: matched funding, koncernintern §20, derivater med klar klassifikation, balanceprincip-spørgsmål, dansk kontoramme-mapping.
+- **Opus 4.7** — kun ved reel kompleksitet: hedge accounting-valg, reklassifikation, strukturerede produkter, flertrinsscenarier med usikker klassifikation, eller når skillen selv skal revideres og forbedres.
+
+De fleste af dine scenarier ligger i Sonnet-kategorien. Skift til Opus når du mærker at klassifikationen ikke er oplagt eller scenariet har flere sammenvævede juridiske lag.
+
 ## Arbejdsgang
 
 ### 0. Projekt-kontekst: er du i et projekt?
@@ -57,45 +67,38 @@ Undtagelse: Hvis brugeren eksplicit beder om et illustrativt eksempel ("vis mig 
 
 ### 2. Hent IFRS 9-grundlaget og reguleringsgrundlaget
 
-Før du skriver output, læs den relevante IFRS 9-reference:
+### 2. Hent KUN den relevante reference (on-demand)
 
-```
-view /path/to/skill/references/ifrs9-key-paragraphs.md
-```
+For at holde konteksten fokuseret, læs KUN de reference-filer der matcher scenariet. Brug nedenstående lookup-tabel.
 
-Brug altid præcise paragrafhenvisninger (f.eks. B5.1.2A, 5.7.1, 4.1.2, 5.5.1). Gæt aldrig — slå op.
+**Reference-filernes roller:**
 
-**IFRS 13-lag (fair value measurement):** Når scenariet involverer fair value-måling — dvs. altid ved FVTPL/FVOCI, alle derivater, kursskæring, og spørgsmål om Level 1/2/3, mid-kurs, bid-ask, exit price, principal market, eller CVA/DVA — læs IFRS 13-referencen:
+| Fil | Indhold | Læs når |
+|---|---|---|
+| `references/ifrs9-key-paragraphs.md` | IFRS 9-paragraffer (klassifikation, måling, ECL, hedge, derecognition) | Altid (grundlag) |
+| `references/ifrs13-fair-value.md` | Fair value-måling, Level 1/2/3, exit price, day-one P&L | FVTPL/FVOCI, derivater, kursskæring, mid-kurs, hierarchy-spørgsmål |
+| `references/lbk1541-realkreditloven.md` | Realkreditloven (§20, matchfunding, §15, refinansiering) | Realkreditscenarier, koncernintern funding, obligationstyper |
+| `references/bek1425-balanceprincip.md` | Overordnet vs. specifikt balanceprincip, risikogrænser | Når princip-valget eller netting-kvaliteten er relevant |
+| `references/regnskabsbekendtgoerelsen.md` | BEK 658 kontoramme, bilag 3/4, posteringsmapping | Dansk regnskabskontekst, postnumre, indberetning |
+| `scripts/generate_tkonti.py` | JSON-schema og rendering-logik | Når du skriver JSON (læs kun docstring, linje 1-80) |
+| `assets/tkonti.css` | CSS-definitioner for T-konti rendering | Kun ved fallback direkte HTML (sjældent) |
 
-```
-view /path/to/skill/references/ifrs13-fair-value.md
-```
+**Scenarie → minimum læse-set:**
 
-IFRS 13 er det metodiske grundlag for *hvordan* fair value måles, hvor IFRS 9 definerer *hvornår* fair value skal anvendes. Angiv IFRS 13-paragrafreferencer (fx 9, 57, 70, 72, 93) når fair value-målingens metode er relevant for bogføringen — fx ved kursskæring (IFRS 13 par. 59-60 + B5.1.2A), mid-kurs-konvention (par. 71), eller fair value hierarchy-klassifikation.
+- **Simpelt FVTPL udlån/obligation uden realkredit**: `ifrs9-key` + `script` (docstring).
+- **Derivat (IRS, FRA, option)**: `ifrs9-key` (sektion 4 + 9) + `ifrs13-fair-value` (sektion 1, 8) + `script`.
+- **Matched funding / kursskæring**: `ifrs9-key` (sektion 3, 4, 11) + `ifrs13-fair-value` (sektion 6, 13) + `lbk1541` (sektion 1-2) + `script`.
+- **Koncernintern realkreditstruktur (§20)**: Tilføj `lbk1541` (sektion 9).
+- **Balanceprincip-spørgsmål**: Tilføj `bek1425`.
+- **Dansk kontoramme / post-mapping**: Tilføj `regnskabsbekendtgoerelsen` (specielt sektionen om bilag 3/4).
+- **Impairment / ECL**: `ifrs9-key` (sektion 7) + `script`.
+- **Hedge accounting**: `ifrs9-key` (sektion 9).
 
-**LBK 1541-lag:** For realkreditscenarier (matched funding, koncernintern funding, obligationsudstedelse, refinansiering, lånegrænser) læs det reguleringsmæssige grundlag:
+**Læs kun de nødvendige sektioner.** Hver reference-fil har en indholdsfortegnelse med sektionsnumre. Når du ved hvilken sektion du skal bruge, anvend `view_range` til at læse netop den sektion i stedet for hele filen. Eksempel: hvis scenariet kun involverer ECL, læs `ifrs9-key-paragraphs.md` sektion 7 med view_range, ikke hele filen.
 
-```
-view /path/to/skill/references/lbk1541-realkreditloven.md
-```
+**Paragrafpræcision:** Brug altid præcise henvisninger (fx IFRS 9 B5.1.2A, 5.7.1, 4.1.2, 5.5.1; IFRS 13 par. 9, 71, 72; LBK 1541 § 20, stk. 3). Gæt aldrig — slå op.
 
-Angiv altid LBK 1541 § X i principle-boxen når et realkreditregulatorisk princip er relevant for bogføringen.
-
-**BEK 1425-lag:** For scenarier der involverer balanceprincippet, risikogrænser, konverteringsret, forhåndsemission, blokemission, eller hvor kvaliteten af matched funding-nettingen er relevant, læs også:
-
-```
-view /path/to/skill/references/bek1425-balanceprincip.md
-```
-
-BEK 1425 ("Obligationsbekendtgørelsen") definerer det specifikke og det overordnede balanceprincip. Valget af princip bestemmer, hvor tæt kursregulering netter: under det specifikke princip (kap. 3) netter det perfekt, under det overordnede princip (kap. 2) kan der være residuale betalingsforskelle. Spørg brugeren om princip-valget hvis det påvirker scenariet.
-
-**Regnskabsbekendtgørelsen (BEK 658):** Når brugeren spørger om kontoramme, indberetning til Finanstilsynet, hvilken resultat-/balancepost en IFRS 9-postering lander i, eller mapping mellem IFRS 9 og danske regnskabskrav, læs:
-
-```
-view /path/to/skill/references/regnskabsbekendtgoerelsen.md
-```
-
-Filen indeholder bilag 3 (balance) og bilag 4 (resultatopgørelse) samt en komplet mapping-tabel fra IFRS 9-hændelser til regnskabsbekendtgørelsens poster. Brug den til at annotere T-konti-output med de korrekte postnumre (f.eks. "Post 8 — Kursreguleringer") når brugeren arbejder i dansk regnskabskontekst.
+**Forrang ved konflikt:** Hvis projekt-kontekst fra trin 0 konflikter med reference-filerne (fx specifik intern praksis vs. generel anbefaling), følg projekt-konteksten og noter diskrepansen kort.
 
 ### 3. Definér principper
 
@@ -174,27 +177,62 @@ Afslut med:
 
 Output er ALTID en `.html`-fil. Aldrig markdown. Aldrig ren tekst.
 
-### Metode: JSON → script → HTML
+### Metode: JSON → validator → script → HTML
 
-Byg output i to trin:
+Byg output i tre trin:
 
-**Trin A:** Konstruér en JSON-datastruktur der beskriver hele scenariet. Se docstring i scriptet for det fulde schema:
+**Trin A:** Konstruér en JSON-datastruktur der beskriver hele scenariet. Se det fulde schema i docstringen øverst i scriptet (læs kun linje 1-100 med view_range):
 
 ```
-view /path/to/skill/scripts/generate_tkonti.py
+view /path/to/skill/scripts/generate_tkonti.py (view_range [1, 100])
 ```
 
-JSON-strukturen har: `title`, `subtitle`, `principles` (array af strenge), `scenario` (HTML med `<tag-a>` for loan-tags), `days` (array med callouts, netting, accounts, saldi), `summary_cards`, `netting_table`, `conclusion`.
+**JSON-schema v2 (stramt typed format):**
 
-I account rows: brug `<delta>text</delta>` for grøn kursændring, `<delta-neg>text</delta-neg>` for rød, `<note>text</note>` for noter.
+Top-level: `title` (required), `subtitle`, `principles` (array), `scenario` (str), `days` (array, required), `summary_cards`, `netting_table`, `conclusion`.
 
-**Trin B:** Kør scriptet:
+Hver `day` har: `title` (required), `callouts`, `netting`, `accounts` (required), `saldi`.
+
+**Rows i accounts har præcis tre former — vælg én:**
+
+```json
+{"text": "Oprettelse", "debet": 994000}        // Posting: debet
+{"text": "Udbetaling", "kredit": 989000}       // Posting: kredit
+{"total": true, "saldo": 994000, "side": "debet"}   // Total-row (saldo på debet- eller kredit-side)
+```
+
+**Vigtigt: beløb er ALTID tal, aldrig strings.** Skriv `994000`, ikke `"994.000"` eller `"Oprettelse 994.000"`. Scriptet formaterer selv til dansk tusindtalsseparator (`994.000`), typografisk minus (`−21.500`), og farver negative tal røde, positive grønne.
+
+En posting-row har præcis én af `debet` eller `kredit`, aldrig begge. Text er valgfri men anbefalet (fx "Oprettelse", "Afdrag", "Kursregulering").
+
+**Netting-items har to former:**
+
+```json
+{"label": "ΔFV udlån", "amount": -21500}      // Typed: farve fra fortegn
+{"color": "green", "html": "<strong>Text</strong>"}    // Free-form: tekst uden tal
+```
+
+**Saldi-bar:** `{"label": "Udlån", "value": 994000}` for tal (formateres + farves), eller `{"label": "Bal", "value": "✓"}` for strings.
+
+**Summary_cards og netting_table:** tal-celler formateres og farves automatisk; strings bruges uændret (fx `""` for tomme celler).
+
+**Markup-tokens i strings:** `<tag-a>X</tag-a>` (blå låne-tag), `<tag-b>X</tag-b>` (lilla), `<strong>X</strong>` (fed), `<note>X</note>` (lille grå). Brug IKKE `<delta>` eller `<delta-neg>` længere — farver afledes af tal-fortegn automatisk.
+
+**Trin B:** Validér JSON'en FØR du genererer HTML. Validatoren checker balance-ligning eksakt (Σ debet − Σ kredit = deklareret saldo × retning), typer, og alle tokens:
+
+```bash
+python /path/to/skill/scripts/validate_scenario.py input.json
+```
+
+Exit 0 = OK. Exit 1 = fejl der skal rettes. Balance-fejl på konti er altid blokerende (modsat v1 hvor de var advarsler), fordi vi nu har eksakte tal. Ret alle fejl før du fortsætter.
+
+**Trin C:** Kør scriptet:
 
 ```bash
 python /path/to/skill/scripts/generate_tkonti.py input.json /mnt/user-data/outputs/output.html
 ```
 
-Scriptet genererer komplet HTML med dark mode, alle CSS-klasser, og korrekt layout.
+Scriptet genererer komplet HTML med dark mode, alle CSS-klasser, korrekt layout, og alle beløb formateret dansk.
 
 ### Designprincipper (håndhævet af scriptet)
 
@@ -208,11 +246,13 @@ Scriptet genererer komplet HTML med dark mode, alle CSS-klasser, og korrekt layo
 
 ### Fallback: direkte HTML
 
-Hvis scenariet kræver layout der ikke dækkes af scriptet (specialtabeller, custom diagrammer), kan du skrive HTML direkte. Brug da `assets/style-reference.html` som CSS-reference:
+Hvis scenariet kræver layout der ikke dækkes af scriptet (specialtabeller, custom diagrammer), kan du skrive HTML direkte. Indlejr `assets/tkonti.css` inline i `<style>`-tagget for at bevare konsistent styling:
 
 ```
-view /path/to/skill/assets/style-reference.html
+view /path/to/skill/assets/tkonti.css
 ```
+
+CSS'en er den samme som scriptet bruger, så output'et vil være visuelt konsistent med de scriptgenererede T-konti.
 
 ### Sprog
 
