@@ -1,7 +1,11 @@
 # IFRS 13 — Fair Value Measurement (nøgleparagraffer)
 
-Reference: IFRS 13 Fair Value Measurement (maj 2011, senest konsolideret 2022)
-Kilde: https://www.ifrs.org/content/dam/ifrs/publications/pdf-standards/english/2022/issued/part-a/ifrs-13-fair-value-measurement.pdf
+Reference: IFRS 13 Fair Value Measurement som adopteret af EU
+Retsgrundlag: Commission Regulation (EU) No 1255/2012 af 11. december 2012 (IFRS 13-adoptionsforordning)
+Konsolideret tekst: Commission Regulation (EU) 2023/1803 af 13. september 2023, Annex (gældende fra 16. oktober 2023)
+Kilde: https://eur-lex.europa.eu/eli/reg/2023/1803
+Direkte til IFRS 13 i konsolideret tekst: https://eur-lex.europa.eu/legal-content/DA/TXT/?uri=CELEX:02023R1803-20231016
+Reproduktionsret: Tilladt inden for EEA jf. EUR-Lex standardvilkår. Paragraftekster er EU-forordningstekst, ikke IASB-originaltekst.
 
 Formål: Definerer fair value, rammer målingen og specificerer oplysningskrav, når en anden IFRS kræver eller tillader fair value-måling. For realkreditinstitutter er IFRS 13 det metodiske grundlag, når udlån og obligationer måles til FVTPL under IFRS 9 (4.1.5 / 4.2.2(b)).
 

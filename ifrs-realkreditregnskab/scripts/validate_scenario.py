@@ -37,7 +37,7 @@ VALID_NETTING_COLORS = {"green", "red", "grey"}
 VALID_SALDO_CSS = {"", "saldo-pos", "saldo-zero", "saldo-neg", "delta", "delta-neg"}
 VALID_CARD_COLORS = {"teal", "purple", "amber"}
 
-REQUIRED_TOP = ["title", "days"]
+REQUIRED_TOP = ["title", "days", "legal_framework"]
 RECOMMENDED_TOP = ["subtitle", "principles", "scenario", "conclusion"]
 
 
@@ -297,6 +297,58 @@ def validate_netting_table(table: dict, r: Result) -> None:
             r.errors.append(f"netting_table.total: has {len(total)} cells but table has {n_cols} headers")
 
 
+def validate_legal_framework(lf, r: Result) -> None:
+    if not isinstance(lf, dict):
+        r.errors.append("'legal_framework' must be an object")
+        return
+    sources = lf.get("sources")
+    if not isinstance(sources, list) or len(sources) == 0:
+        r.errors.append("legal_framework.sources must be a non-empty array")
+        return
+    for i, src in enumerate(sources):
+        loc = f"legal_framework.sources[{i}]"
+        if not isinstance(src, dict):
+            r.errors.append(f"{loc}: must be an object")
+            continue
+        if "source" not in src:
+            r.errors.append(f"{loc}: missing 'source' (short name, e.g. 'IFRS 9')")
+        paragraphs = src.get("paragraphs")
+        if not isinstance(paragraphs, list) or len(paragraphs) == 0:
+            r.errors.append(f"{loc}: 'paragraphs' must be a non-empty array")
+            continue
+        for j, p in enumerate(paragraphs):
+            ploc = f"{loc}.paragraphs[{j}]"
+            if not isinstance(p, dict):
+                r.errors.append(f"{ploc}: must be an object with 'ref' and 'note'")
+                continue
+            if "ref" not in p or not isinstance(p["ref"], str) or not p["ref"].strip():
+                r.errors.append(f"{ploc}: 'ref' must be a non-empty string (e.g. 'B5.1.2A', '§ 20, stk. 3')")
+            if "note" in p and not isinstance(p["note"], str):
+                r.errors.append(f"{ploc}: 'note' must be a string when present")
+
+    choices = lf.get("interpretive_choices")
+    if choices is not None:
+        if not isinstance(choices, list):
+            r.errors.append("legal_framework.interpretive_choices must be an array of strings")
+        else:
+            for i, c in enumerate(choices):
+                if not isinstance(c, str):
+                    r.errors.append(f"legal_framework.interpretive_choices[{i}]: must be a string")
+
+    not_applied = lf.get("not_applied")
+    if not_applied is not None:
+        if not isinstance(not_applied, list):
+            r.errors.append("legal_framework.not_applied must be an array")
+        else:
+            for i, item in enumerate(not_applied):
+                loc = f"legal_framework.not_applied[{i}]"
+                if isinstance(item, dict):
+                    if "source" not in item and "note" not in item:
+                        r.errors.append(f"{loc}: must have at least 'source' or 'note'")
+                elif not isinstance(item, str):
+                    r.errors.append(f"{loc}: must be an object {{source, note}} or a string")
+
+
 def validate(data: dict) -> Result:
     r = Result()
     validate_top(data, r)
@@ -308,6 +360,8 @@ def validate(data: dict) -> Result:
         validate_summary_cards(data["summary_cards"], r)
     if "netting_table" in data:
         validate_netting_table(data["netting_table"], r)
+    if "legal_framework" in data:
+        validate_legal_framework(data["legal_framework"], r)
     return r
 
 

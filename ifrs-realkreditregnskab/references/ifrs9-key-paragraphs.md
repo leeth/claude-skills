@@ -1,7 +1,11 @@
 # IFRS 9 — Nøgleparagraffer til bogføring
 
-Reference: IFRS 9 Financial Instruments (2014, senest konsolideret 2021)
-Kilde: https://www.ifrs.org/content/dam/ifrs/publications/pdf-standards/english/2021/issued/part-a/ifrs-9-financial-instruments.pdf
+Reference: IFRS 9 Financial Instruments som adopteret af EU
+Retsgrundlag: Commission Regulation (EU) 2016/2067 af 22. november 2016 (IFRS 9-adoptionsforordning)
+Konsolideret tekst: Commission Regulation (EU) 2023/1803 af 13. september 2023, Annex (gældende fra 16. oktober 2023)
+Kilde: https://eur-lex.europa.eu/eli/reg/2023/1803
+Direkte til IFRS 9 i konsolideret tekst: https://eur-lex.europa.eu/legal-content/DA/TXT/?uri=CELEX:02023R1803-20231016
+Reproduktionsret: Tilladt inden for EEA jf. EUR-Lex standardvilkår. Paragraftekster er EU-forordningstekst, ikke IASB-originaltekst.
 
 ## Indholdsfortegnelse
 

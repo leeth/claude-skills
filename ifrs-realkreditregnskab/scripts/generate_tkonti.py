@@ -18,15 +18,39 @@ signs, colors). Claude only writes numbers.
 Top-level structure:
 
 {
-  "title":          str  (required)
-  "subtitle":       str  (optional)
-  "principles":     [str, ...]  (optional, 4-7 recommended)
-  "scenario":       str  (optional, HTML with <tag-a>/<tag-b> markup)
-  "days":           [Day, ...]  (required)
-  "summary_cards":  [SummaryCard, ...]  (optional)
-  "netting_table":  NettingTable  (optional)
-  "conclusion":     str  (optional)
+  "title":            str  (required)
+  "subtitle":         str  (optional)
+  "principles":       [str, ...]  (optional, 4-7 recommended)
+  "scenario":         str  (optional, HTML with <tag-a>/<tag-b> markup)
+  "days":             [Day, ...]  (required)
+  "summary_cards":    [SummaryCard, ...]  (optional)
+  "netting_table":    NettingTable  (optional)
+  "conclusion":       str  (optional)
+  "legal_framework":  LegalFramework  (REQUIRED — always rendered last)
 }
+
+---
+
+LegalFramework (required, always rendered as final section):
+
+{
+  "sources": [LegalSource, ...]          (required, at least one)
+  "interpretive_choices": [str, ...]     (optional)
+  "not_applied": [NotAppliedItem, ...]   (optional)
+}
+
+LegalSource:
+  {
+    "source":    str   (short name, e.g. "IFRS 9", "LBK 1541")
+    "full_name": str   (optional full name with citation)
+    "paragraphs": [
+      {"ref": str, "note": str},   # ref e.g. "B5.1.2A" or "§ 20, stk. 3"
+      ...
+    ]
+  }
+
+NotAppliedItem:
+  {"source": str, "note": str}
 
 ---
 
@@ -425,6 +449,96 @@ def render_conclusion(text: str) -> str:
     return f'<div class="principle-box" style="border-left-color: #1D9E75;">\n<strong>Konklusion:</strong> {transform_markup(text)}\n</div>'
 
 
+def render_legal_framework(lf: dict) -> str:
+    """Render the legal framework section — always placed last in the HTML.
+
+    Schema:
+      {
+        "sources": [
+          {
+            "source": "IFRS 9",
+            "full_name": "IFRS 9 Financial Instruments (EU 2023/1803)",
+            "paragraphs": [
+              {"ref": "B5.1.2A", "note": "Day-one P&L ..."},
+              ...
+            ]
+          }, ...
+        ],
+        "interpretive_choices": ["...", ...],     # optional
+        "not_applied": [{"source": "...", "note": "..."}, ...]  # optional
+      }
+    """
+    _require("sources" in lf and isinstance(lf["sources"], list) and len(lf["sources"]) > 0,
+             "legal_framework.sources must be a non-empty array")
+
+    lines = [
+        '<hr class="sep">',
+        '<div class="day-title">Juridisk ramme</div>',
+        '<div class="principle-box" style="border-left-color: #6B7280;">',
+    ]
+
+    # Main sources list
+    for i, src in enumerate(lf["sources"]):
+        _require("source" in src, f"legal_framework.sources[{i}] missing 'source'")
+        _require("paragraphs" in src and isinstance(src["paragraphs"], list),
+                 f"legal_framework.sources[{i}] missing 'paragraphs' array")
+
+        source = html_module.escape(src["source"])
+        full_name = src.get("full_name", "")
+        header = f'<strong>{source}</strong>'
+        if full_name:
+            header += f' <span class="note">— {html_module.escape(full_name)}</span>'
+
+        lines.append(f'<div style="margin-top: 8px; margin-bottom: 4px;">{header}</div>')
+        lines.append('<ul style="margin: 0 0 8px 0; padding-left: 22px; font-size: 12px; line-height: 1.6;">')
+        for j, p in enumerate(src["paragraphs"]):
+            _require(isinstance(p, dict) and "ref" in p,
+                     f"legal_framework.sources[{i}].paragraphs[{j}] must have 'ref'")
+            ref = html_module.escape(p["ref"])
+            note = transform_markup(p.get("note", ""))
+            if note:
+                lines.append(f'<li><strong>{ref}</strong> — {note}</li>')
+            else:
+                lines.append(f'<li><strong>{ref}</strong></li>')
+        lines.append('</ul>')
+
+    lines.append('</div>')
+
+    # Interpretive choices block
+    choices = lf.get("interpretive_choices")
+    if choices and isinstance(choices, list) and len(choices) > 0:
+        lines.append('<div class="principle-box" style="border-left-color: #D97706;">')
+        lines.append('<strong>Fortolkningsvalg:</strong>')
+        lines.append('<ul style="margin: 6px 0 0 0; padding-left: 22px; font-size: 12px; line-height: 1.6;">')
+        for c in choices:
+            lines.append(f'<li>{transform_markup(str(c))}</li>')
+        lines.append('</ul>')
+        lines.append('</div>')
+
+    # Not applied block
+    not_applied = lf.get("not_applied")
+    if not_applied and isinstance(not_applied, list) and len(not_applied) > 0:
+        lines.append('<div class="principle-box" style="border-left-color: #9CA3AF;">')
+        lines.append('<strong>Ikke anvendt (men beslægtet):</strong>')
+        lines.append('<ul style="margin: 6px 0 0 0; padding-left: 22px; font-size: 12px; line-height: 1.6;">')
+        for item in not_applied:
+            if isinstance(item, dict):
+                src_name = html_module.escape(item.get("source", ""))
+                note = transform_markup(item.get("note", ""))
+                if src_name and note:
+                    lines.append(f'<li><strong>{src_name}</strong> — {note}</li>')
+                elif src_name:
+                    lines.append(f'<li><strong>{src_name}</strong></li>')
+                elif note:
+                    lines.append(f'<li>{note}</li>')
+            else:
+                lines.append(f'<li>{transform_markup(str(item))}</li>')
+        lines.append('</ul>')
+        lines.append('</div>')
+
+    return '\n'.join(lines)
+
+
 def generate_html(data: dict) -> str:
     _require("title" in data, "top-level 'title' required")
     _require("days" in data and isinstance(data["days"], list),
@@ -463,6 +577,11 @@ def generate_html(data: dict) -> str:
         parts.append(render_netting_table(data["netting_table"]))
     if data.get("conclusion"):
         parts.append(render_conclusion(data["conclusion"]))
+    # Legal framework is REQUIRED and ALWAYS rendered last
+    _require("legal_framework" in data,
+             "top-level 'legal_framework' is REQUIRED. See generate_tkonti.py docstring "
+             "for schema. Every IFRS/realkredit T-konto output must cite the legal basis.")
+    parts.append(render_legal_framework(data["legal_framework"]))
     parts.extend(['</body>', '</html>'])
     return '\n'.join(parts)
 

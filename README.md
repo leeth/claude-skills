@@ -4,7 +4,7 @@ Her deler jeg mine Claude Code skills — specialiserede kommandoer og værktøj
 
 ## Skills
 
-### [ifrs9-accounting](./ifrs9-accounting/)
+### [ifrs-realkreditregnskab](./ifrs-realkreditregnskab/)
 
 IFRS 9 og IFRS 13 regnskabsmæssig bogføring med T-konti og HTML-visualisering, inkl. dansk realkreditregulering (LBK 1541, BEK 1425, BEK 658).
 

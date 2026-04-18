@@ -1,5 +1,5 @@
 ---
-name: ifrs9-accounting
+name: ifrs-realkreditregnskab
 description: >
   IFRS 9 og IFRS 13 regnskabsmæssig bogføring med T-konti og HTML-visualisering,
   inkl. dansk realkreditregulering (LBK 1541, BEK 1425, BEK 658). Brug denne skill
@@ -13,6 +13,7 @@ description: >
   "regnskabsbekendtgørelsen", "kontoramme", "bilag 3", "bilag 4",
   "post 8 kursreguleringer", eller ethvert scenarie med finansielle instrumenter
   og regnskab. Brug skillen selv uden eksplicit IFRS-nævnelse.
+  Kilderettigheder: IFRS 9/13-referencer baseret på EU 2023/1803 (EUR-Lex), tilladt i EEA.
 ---
 
 # IFRS 9 Accounting — T-konti og bogføring
@@ -75,8 +76,8 @@ For at holde konteksten fokuseret, læs KUN de reference-filer der matcher scena
 
 | Fil | Indhold | Læs når |
 |---|---|---|
-| `references/ifrs9-key-paragraphs.md` | IFRS 9-paragraffer (klassifikation, måling, ECL, hedge, derecognition) | Altid (grundlag) |
-| `references/ifrs13-fair-value.md` | Fair value-måling, Level 1/2/3, exit price, day-one P&L | FVTPL/FVOCI, derivater, kursskæring, mid-kurs, hierarchy-spørgsmål |
+| `references/ifrs9-key-paragraphs.md` | IFRS 9-paragraffer (klassifikation, måling, ECL, hedge, derecognition) — EU-adopteret tekst, EU 2023/1803 | Altid (grundlag) |
+| `references/ifrs13-fair-value.md` | Fair value-måling, Level 1/2/3, exit price, day-one P&L — EU-adopteret tekst, EU 2023/1803 | FVTPL/FVOCI, derivater, kursskæring, mid-kurs, hierarchy-spørgsmål |
 | `references/lbk1541-realkreditloven.md` | Realkreditloven (§20, matchfunding, §15, refinansiering) | Realkreditscenarier, koncernintern funding, obligationstyper |
 | `references/bek1425-balanceprincip.md` | Overordnet vs. specifikt balanceprincip, risikogrænser | Når princip-valget eller netting-kvaliteten er relevant |
 | `references/regnskabsbekendtgoerelsen.md` | BEK 658 kontoramme, bilag 3/4, posteringsmapping | Dansk regnskabskontekst, postnumre, indberetning |
@@ -173,6 +174,33 @@ Afslut med:
 - Netting-oversigtstabel der viser alle effekter og hvordan de netter
 - Konklusion i en principle-box med grøn kant
 
+### 8. Juridisk ramme (OBLIGATORISK sidst i HTML)
+
+Hver output **skal** afslutte med en "Juridisk ramme"-sektion der lister præcis hvilke regler og paragraffer der er anvendt i bogføringen. Dette gør det muligt for brugeren at efterprøve grundlaget og genfinde kilderne ved revision eller dialog med revisor.
+
+Sektionen er struktureret som kilde → paragraffer. Typiske kilder:
+
+- **IFRS 9** — klassifikation, måling, impairment, hedge, derecognition (EU 2023/1803)
+- **IFRS 13** — fair value-måling, hierarki, day-one P&L (EU 2023/1803)
+- **LBK 1541** — Realkreditloven (matchfunding, § 20, refinansiering)
+- **BEK 1425** — Balanceprincippet (specifikt vs. overordnet)
+- **BEK 658** — Regnskabsbekendtgørelsen (dansk kontoramme, bilag 3/4)
+- **CRR / CRD** — når kapitaldækning eller risikovægte er relevant
+- **FIL** — Lov om finansiel virksomhed (sjældent relevant for ren realkredit-bogføring)
+
+Hver post indeholder:
+- `source`: Kortnavn på regelsættet (fx "IFRS 9", "LBK 1541")
+- `full_name`: Fuldt navn (fx "IFRS 9 Financial Instruments (EU 2023/1803)")
+- `paragraphs`: Liste af anvendte paragraffer med kort forklaring — hver som `{"ref": "B5.1.2A", "note": "Day-one P&L ved Level 1-instrument"}`
+
+Yderligere, efter hovedlisten, tilføj (når relevant):
+- **Fortolkningsvalg:** Korte noter om hvor scenariet har haft flere mulige behandlinger og hvad der blev valgt. Kan være tom liste hvis ikke relevant.
+- **Ikke anvendt:** Regler der kunne have været relevante i beslægtede scenarier men IKKE er anvendt her. Hjælper med at afgrænse scopet.
+
+**Sprogregel:** Paragrafhenvisninger skal være præcise (fx "IFRS 9 B5.1.2A", ikke "IFRS 9 kap. 5"). Gæt aldrig — slå op hvis usikker.
+
+**Placeringsregel:** Den juridiske ramme står **altid sidst** i HTML'en, efter konklusionen. Dette er fast layout.
+
 ## Output-format
 
 Output er ALTID en `.html`-fil. Aldrig markdown. Aldrig ren tekst.
@@ -189,9 +217,41 @@ view /path/to/skill/scripts/generate_tkonti.py (view_range [1, 100])
 
 **JSON-schema v2 (stramt typed format):**
 
-Top-level: `title` (required), `subtitle`, `principles` (array), `scenario` (str), `days` (array, required), `summary_cards`, `netting_table`, `conclusion`.
+Top-level: `title` (required), `subtitle`, `principles` (array), `scenario` (str), `days` (array, required), `summary_cards`, `netting_table`, `conclusion`, `legal_framework` (required, se trin 8).
 
 Hver `day` har: `title` (required), `callouts`, `netting`, `accounts` (required), `saldi`.
+
+**`legal_framework` (obligatorisk):**
+
+```json
+{
+  "sources": [
+    {
+      "source": "IFRS 9",
+      "full_name": "IFRS 9 Financial Instruments (EU 2023/1803)",
+      "paragraphs": [
+        {"ref": "B5.1.2A", "note": "Day-one P&L ved Level 1-instrument"},
+        {"ref": "5.7.1", "note": "FVTPL: alle kursændringer i P&L"}
+      ]
+    },
+    {
+      "source": "LBK 1541",
+      "full_name": "Realkreditloven (konsolideret)",
+      "paragraphs": [
+        {"ref": "§ 1a, nr. 1", "note": "Matchfunding-definition"}
+      ]
+    }
+  ],
+  "interpretive_choices": [
+    "FKA bogført on-balance som FVTPL-aktiv, ikke off-balance tilsagn."
+  ],
+  "not_applied": [
+    {"source": "FIL § 16b", "note": "Gælder kun pengeinstitut→realkreditinstitut; ikke relevant her."}
+  ]
+}
+```
+
+`interpretive_choices` og `not_applied` er valgfri men anbefales hvor det skærper scopet.
 
 **Rows i accounts har præcis tre former — vælg én:**
 
@@ -305,6 +365,12 @@ Output er på **dansk** (med engelske IFRS-termer i parentes hvor det er præcis
 - Producerer ikke regneark — kun HTML med T-konti
 - LBK 1541-referencerne bruges udelukkende til at understøtte korrekt IFRS 9-bogføring i realkreditkontekst — skillen giver ikke regulatorisk rådgivning om compliance med balanceprincippet, lånegrænser eller Finanstilsynets krav
 
+## Kilderettigheder
+
+IFRS 9- og IFRS 13-referencerne i denne skill er baseret på **Commission Regulation (EU) 2023/1803** (konsolideret tekst, gældende fra 16. oktober 2023), som er offentligt tilgængelig EU-forordningstekst fra EUR-Lex. Reproduktion er tilladt inden for EEA. Kilden er ikke IASB-originalteksten fra ifrs.org.
+
+De danske referencefiler (BEK 658, BEK 1425, LBK 1541) er hentet fra retsinformation.dk og er fri dansk lovgivning.
+
 ## Licens
 
 Denne skill er udgivet under **PolyForm Noncommercial License 1.0.0**. Fri brug til ikke-kommercielle formål, herunder personlig brug, forskning, undervisning, og brug af nonprofitorganisationer, uddannelsesinstitutioner, offentlige forskningsorganisationer og myndigheder. Se `LICENSE` for de fulde vilkår.
@@ -312,4 +378,5 @@ Denne skill er udgivet under **PolyForm Noncommercial License 1.0.0**. Fri brug 
 Kommerciel brug kræver separat licens. Kontakt forfatteren for kommerciel licensering.
 
 Copyright 2026 Asbjørn (https://linkedin.com/in/asbjorn)
+Skill: ifrs-realkreditregnskab (tidligere: ifrs9-accounting)
 
